@@ -15,11 +15,16 @@ public class BattleManager : MonoBehaviour
 
     // panel control
     public GameObject ActionPanel;
-    //public GameObject SelectionPanel;
+    
+    // camera selection
+    public GameObject MainCamera;
+    public bool cameraFollowing = false;
 
-    //contains array of unit object and stats
+    //contains array of unit model with parent object having the stats of the unit
     public GameObject[] HeroPartyList;
     public GameObject[] EnemyPartyList;
+    public int HeroIndex = 0;
+    public int EnemyIndex = 0;
 
     public bool EnemySurpriseAttack;
 
@@ -45,9 +50,6 @@ public class BattleManager : MonoBehaviour
             ActionPanel.SetActive(true);
             Debug.Log("Heros move first");
         }
-
-        // this panel always starts as false
-        //SelectionPanel.SetActive(false);
     }
 
     // Update is called once per frame
@@ -65,25 +67,35 @@ public class BattleManager : MonoBehaviour
 
             case BattleState.SelectTarget:
 
-                // move camera to first enemy unit
+                /*
+                bool x = Input.GetButtonDown("LeftArrow");
+                bool y = Input.GetKeyDown(KeyCode.LeftArrow);
+                bool w = Input.GetKey(KeyCode.LeftArrow);
+                float z = Input.GetAxis("horizontal");
+                */
 
-            /*
-            bool x = Input.GetButtonDown("LeftArrow");
-            bool y = Input.GetKeyDown(KeyCode.LeftArrow);
-            bool w = Input.GetKey(KeyCode.LeftArrow);
-            float z = Input.GetAxis("horizontal");
-            */
-                if(Input.GetKeyDown(KeyCode.LeftArrow))
+                // move camera to first enemy unit
+                if(!cameraFollowing) cameraFollowing = true;
+                
+                if(Input.GetKeyDown(KeyCode.Space))
+                {
+                    Debug.Log("Attack");
+                    Attack(HeroPartyList[HeroIndex], EnemyPartyList[EnemyIndex]);
+                }
+                else if(Input.GetKeyDown(KeyCode.LeftArrow))
                 {
                     Debug.Log("left");
+                    if(EnemyIndex < EnemyPartyList.Length - 1) EnemyIndex++;
+                    else EnemyIndex = 0;
                 }
                 else if(Input.GetKeyDown(KeyCode.RightArrow))
                 {
                     Debug.Log("right");
+                    if(EnemyIndex == 0) EnemyIndex = EnemyPartyList.Length - 1;
+                    else EnemyIndex--; 
                 }
-                
-               
-                //state++; // moves to next state
+                MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList[EnemyIndex];
+
                 break;
 
             case BattleState.EnemyTurn:
@@ -100,6 +112,20 @@ public class BattleManager : MonoBehaviour
 
         //SelectionPanel.SetActive(true);
         state = BattleState.SelectTarget;
+    }
+
+    public void Attack(GameObject AttackingUnit, GameObject DefendingUnit)
+    {
+        int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
+        int Attack = AttackingUnit.GetComponentInParent<BaseUnit>().Strength;
+
+        // attack calculation
+        Attack = Attack - Defense;
+
+        // attack can not be negative and must be atleast 1
+        if(Attack < 1) Attack = 1;
+
+        DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= Attack;
     }
 
     // depricated, needs update
