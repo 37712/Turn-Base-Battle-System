@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {HeroTurn, SelectTarget, EnemyTurn, WON, LOST};
+public enum BattleState {HeroTurn, SelectTarget, NextUnit, EnemyTurn, WON, LOST};
 
 public class BattleManager : MonoBehaviour
 {
@@ -81,6 +81,7 @@ public class BattleManager : MonoBehaviour
                 {
                     Debug.Log("Attack");
                     Attack(HeroPartyList[HeroIndex], EnemyPartyList[EnemyIndex]);
+                    //state = BattleState.NextUnit;
                 }
                 else if(Input.GetKeyDown(KeyCode.LeftArrow))
                 {
@@ -98,22 +99,33 @@ public class BattleManager : MonoBehaviour
 
                 break;
 
+            case BattleState.NextUnit:
+                if(HeroIndex == HeroPartyList.Length)
+                {
+                    // all hero units have had their turn
+                    // move state to enemy unit turn
+                    state = BattleState.EnemyTurn;
+                    HeroIndex = 0;
+                }
+                else
+                {
+                    // move hero indext to move next hero unit
+                    HeroIndex++;
+                }
+                break;
+
             case BattleState.EnemyTurn:
                 // run enemy attack code
+                Debug.Log("ENEMY TURN");
                 break;
         }
     }
 
-    public void AttackButton()
-    {
-        Debug.Log("attack button pressed");
-        // disable action panel
-        ActionPanel.SetActive(false);
 
-        //SelectionPanel.SetActive(true);
-        state = BattleState.SelectTarget;
-    }
+    
 
+    // this method calculates damage and applies damage to target
+    // also checks if target is dead and kills the object
     public void Attack(GameObject AttackingUnit, GameObject DefendingUnit)
     {
         int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
@@ -126,7 +138,29 @@ public class BattleManager : MonoBehaviour
         if(Attack < 1) Attack = 1;
 
         DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= Attack;
+
+        // if defending unit health is less than 1 then unit is dead
+        if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
+        {
+            DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
+            DefendingUnit.SetActive(false);
+        }
     }
+
+    /************************* BUTTON SECTION - START ****************************/
+
+    // this is for button only
+    public void AttackButton()
+    {
+        Debug.Log("attack button pressed");
+        // disable action panel
+        ActionPanel.SetActive(false);
+
+        //SelectionPanel.SetActive(true);
+        state = BattleState.SelectTarget;
+    }
+
+    /************************* BUTTON SECTION - END ****************************/
 
     // depricated, needs update
     // check if either party is dead
