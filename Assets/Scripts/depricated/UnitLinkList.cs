@@ -9,7 +9,7 @@ public class UnitLinkList
 {
     private Node head; // start of the linklist, we do need it do not erase
     private Node curr; // where we are currently pointing
-    private int size;
+    public int size;
 
     private class Node
     {
@@ -31,11 +31,6 @@ public class UnitLinkList
     //Special Note to Remember:
     //DO NOT FUCK AROUND WITH THE HEAD USE A POINTER
     //DONT FORGET TO INCREASE OR DECREASE SIZE
-
-    public int GetSize()
-    {
-        return size;
-    }
 
     // add node to the end of the list
     public bool Add(GameObject data)
@@ -70,7 +65,7 @@ public class UnitLinkList
     // NOT TESTED, it is finished and expected to work
     // remove curr node from list
     // move current to prev and remove node
-    public void RemCurr()
+    public void Remove()
     {
         if(size == 1) // if size 1
         {
@@ -84,13 +79,19 @@ public class UnitLinkList
             ptr.next = curr;
             curr.prev = ptr;
 
-            if(head.prev == ptr && head.next == curr) // if head node was erased from link
+            if(head.prev == ptr && head.next == curr) // if head node was removed from link
             {
                 head = curr;
             }
             
             size--; // dont forget to decrease size
         }
+    }
+
+    // reset curr pointer back to head
+    public void CurrToHead()
+    {
+        curr = head;
     }
 
     // get current node in list, return GameObject
