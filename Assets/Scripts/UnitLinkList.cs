@@ -18,12 +18,12 @@ public class UnitLinkList
         public Node prev; // get character to the left
 
         //constructor for the Node class
-        /*public Node()
+        public Node()
         {
             data = null;
             next = null;
             prev = null;
-        }*/
+        }
     }
 
     //Special Note to Remember:

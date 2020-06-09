@@ -64,7 +64,7 @@ public class BattleManager : MonoBehaviour
                 // for this test we only code for attack
                 // make hero actionpanel visible
                 ActionPanel.SetActive(true);
-                //cameraFollowing = false;
+                cameraFollowing = false;
                 break;
 
             case BattleState.SelectTarget:
@@ -110,9 +110,8 @@ public class BattleManager : MonoBehaviour
 
                 // move camera to enemy unit
                 cameraFollowing = true;
-                if(EnemyPartyList.GetCurr() == null) Debug.Log("NULL NULL NULL");
 
-                // give new target for camera to follow
+                // get camera target
                 MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList.GetCurr();
                 
                 break;

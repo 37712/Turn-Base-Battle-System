@@ -4,8 +4,9 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    // do not need to be public
-    Transform DefaultTransform; // used to save original camera position and location
+    // used to save original camera position and rotation
+    Vector3 DefaultPosition;
+    Vector3 DefaultRotation;
 
     // target to view
     public GameObject BattleManager;
@@ -18,7 +19,9 @@ public class CameraFollow : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-        DefaultTransform = this.transform; // save original position and rotation
+        // save original position and rotation
+        DefaultPosition = transform.position;
+        DefaultRotation = transform.eulerAngles;
     }
 
     // Update is called once per frame
@@ -39,8 +42,9 @@ public class CameraFollow : MonoBehaviour
         }
         else
         {
-            //Debug.Log("here");
-            //transform.position = DefaultTransform.position;
+            Debug.Log("NOT FOLLOWING");
+            transform.position = DefaultPosition;
+            transform.eulerAngles = DefaultRotation;
         }
     }
 }
