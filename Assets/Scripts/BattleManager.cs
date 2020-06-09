@@ -64,10 +64,7 @@ public class BattleManager : MonoBehaviour
                 // for this test we only code for attack
                 // make hero actionpanel visible
                 ActionPanel.SetActive(true);
-
-
-                //Debug.Log("state is hero turn");
-
+                cameraFollowing = false;
                 break;
 
             case BattleState.SelectTarget:
@@ -79,13 +76,11 @@ public class BattleManager : MonoBehaviour
                 float z = Input.GetAxis("horizontal");
                 */
 
-                Debug.Log("HERE");
-
                 // move camera to first enemy unit
-                if(!cameraFollowing)
-                {
-                    cameraFollowing = true;
-                }
+                cameraFollowing = true;
+
+                // give new target for camera to follow
+                MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList.GetCurr();
 
                 if(Input.GetKeyDown(KeyCode.Space))
                 {
@@ -119,9 +114,6 @@ public class BattleManager : MonoBehaviour
                     // get previous unit
                     EnemyPartyList.GetPrev();
                 }
-
-                // give new target for camera to follow
-                MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList.GetCurr();
                 
                 break;
 
@@ -150,13 +142,15 @@ public class BattleManager : MonoBehaviour
 
             case BattleState.EnemyTurn:
                 // run enemy attack code
-                //Debug.Log("ENEMY TURN");
+
+                Debug.Log("Enemy turn does nothing");
+
+                // do nothing for now
+                state = BattleState.HeroTurn;
+
                 break;
 
             case BattleState.WON:
-                // run enemy attack code
-                Debug.Log("Player has WON");
-                // move camera to first enemy unit
                 ActionPanel.SetActive(false);
                 WONPanel.SetActive(true);
                 if(cameraFollowing)
@@ -166,8 +160,6 @@ public class BattleManager : MonoBehaviour
                 break;
 
             case BattleState.LOST:
-                // run enemy attack code
-                Debug.Log("Player has LOST");
                 ActionPanel.SetActive(false);
                 LOSTPanel.SetActive(true);
                 if(cameraFollowing)

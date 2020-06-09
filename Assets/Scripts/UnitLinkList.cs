@@ -18,13 +18,13 @@ public class UnitLinkList
         public Node prev; // get character to the left
 
         //constructor for the Node class
-        /*public Node()
+        public Node()
         {
             data = null;
             //index = 0;
             next = null;
             prev = null;
-        }*/
+        }
     }
 
     //Special Note to Remember:
@@ -72,12 +72,12 @@ public class UnitLinkList
     // move current to prev and remove node
     public void Remove()
     {
-        if(size == 1) // if size 1
+        if(size == 1) // if only 1 node
         {
             curr = head = null;
             size--; // dont forget to decrease size
         }
-        else if(size > 1)
+        else if(size > 1) // if more than 1 node
         {
             // move pointers to delete middle node
             Node ptr = curr.prev;
@@ -102,7 +102,8 @@ public class UnitLinkList
     // get current node in list, return GameObject
     public GameObject GetCurr()
     {
-        return curr.data;
+        
+        return (curr == null) ? curr.data : null;
     }
     // move curr to next node in list and get GameObject
     public GameObject GetNext()
