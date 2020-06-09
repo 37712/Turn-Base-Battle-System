@@ -33,13 +33,14 @@ public class CameraFollow : MonoBehaviour
         // if camera folloing is true
         if(BattleManager.GetComponent<BattleManager>().cameraFollowing)
         {
+            //Debug.Log("here");
             transform.position = CameraTarget.transform.position + offsetPosition; // moves camera close to target
             transform.LookAt(CameraTarget.transform); // makes camera look at target
         }
         else
         {
-            Debug.Log("here");
-            transform.position = DefaultTransform.position;
+            //Debug.Log("here");
+            //transform.position = DefaultTransform.position;
         }
     }
 }

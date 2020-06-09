@@ -10,7 +10,7 @@ public class UnitLinkList
     private Node curr; // where we are currently pointing
     public int size;
 
-    private class Node
+    public class Node
     {
         public GameObject data; // this is where we put the basehero or base enemy
         //public int index; // depricated need fix on remcurr
@@ -18,13 +18,12 @@ public class UnitLinkList
         public Node prev; // get character to the left
 
         //constructor for the Node class
-        public Node()
+        /*public Node()
         {
             data = null;
-            //index = 0;
             next = null;
             prev = null;
-        }
+        }*/
     }
 
     //Special Note to Remember:
@@ -103,7 +102,7 @@ public class UnitLinkList
     public GameObject GetCurr()
     {
         
-        return (curr == null) ? curr.data : null;
+        return (curr == null) ? null : curr.data;
     }
     // move curr to next node in list and get GameObject
     public GameObject GetNext()
