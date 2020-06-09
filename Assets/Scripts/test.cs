@@ -18,6 +18,10 @@ public class test : MonoBehaviour
 
     public void testbutton()
     {
-        Debug.Log("asdfasdfasdf");
+        Debug.Log("test button pressed");
+        UnitLinkList list = new UnitLinkList();
+
+        
+
     }
 }

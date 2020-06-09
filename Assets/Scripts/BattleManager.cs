@@ -15,6 +15,8 @@ public class BattleManager : MonoBehaviour
 
     // panel control
     public GameObject ActionPanel;
+    public GameObject WONPanel;
+    public GameObject LOSTPanel;
     
     // camera selection
     public GameObject MainCamera;
@@ -23,8 +25,8 @@ public class BattleManager : MonoBehaviour
     //contains array of unit model with parent object having the stats of the unit
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
-    public int HeroIndex = 0;
-    public int EnemyIndex = 0;
+    //public int HeroIndex = 0;
+    //public int EnemyIndex = 0;
 
     public bool EnemySurpriseAttack;
 
@@ -64,16 +66,11 @@ public class BattleManager : MonoBehaviour
                 ActionPanel.SetActive(true);
 
 
-                Debug.Log("state is hero turn");
+                //Debug.Log("state is hero turn");
 
                 break;
 
             case BattleState.SelectTarget:
-
-                if(isPartyDead()) // checks to see if one of the parties is dead
-                {
-                    break;
-                }
 
                 /*
                 bool x = Input.GetButtonDown("LeftArrow");
@@ -82,46 +79,45 @@ public class BattleManager : MonoBehaviour
                 float z = Input.GetAxis("horizontal");
                 */
 
+                Debug.Log("HERE");
+
                 // move camera to first enemy unit
                 if(!cameraFollowing)
                 {
-                    // camera the first target to follow
-                    MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList.GetCurr();
                     cameraFollowing = true;
                 }
 
                 if(Input.GetKeyDown(KeyCode.Space))
                 {
+                    Debug.Log(  "Attacker " +
+                                HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name +
+                                " Defender " +
+                                EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name  );
+                    
                     Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr());
                     
-                    //state = BattleState.NextUnit;
+                    // if unit is dead
+                    if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
+                    {
+                        EnemyPartyList.Remove();
+                    }
+                    
+                    // next units turn
+                    HeroPartyList.GetNext();
+                    state = BattleState.NextUnit;
                 }
                 else if(Input.GetKeyDown(KeyCode.LeftArrow))
                 {
                     Debug.Log("left");
                     // get next unit
-                    if(EnemyIndex < EnemyPartyList.size - 1)
-                    {
-                        EnemyIndex++;
-                    }
-                    else
-                    {
-                        EnemyIndex = 0;
-                    }
+                    EnemyPartyList.GetNext();
                 }
                 else if(Input.GetKeyDown(KeyCode.RightArrow))
                 {
                     Debug.Log("right");
 
                     // get previous unit
-                    if(EnemyIndex == 0) 
-                    {
-                        EnemyIndex = EnemyPartyList.size - 1;
-                    }
-                    else
-                    {
-                        EnemyIndex--;
-                    }
+                    EnemyPartyList.GetPrev();
                 }
 
                 // give new target for camera to follow
@@ -131,35 +127,53 @@ public class BattleManager : MonoBehaviour
 
             // selects the next hero unit that is going to move
             case BattleState.NextUnit:
-                if(HeroIndex == HeroPartyList.size)
+
+                //Debug.Log("NEXT UNIT STATE");
+
+                // checks to see if one of the parties is dead and moves state to WON or LOST state
+                if(isPartyDead())
                 {
-                    // all hero units have had their turn
-                    // move state to enemy unit turn
+                    break;
+                }
+
+                // if all hero units have had their turn
+                if(HeroPartyList.isBackToHead())
+                {
                     state = BattleState.EnemyTurn;
-                    HeroPartyList.CurrToHead(); // return curr to head
-                    HeroIndex = 0;
                 }
                 else
                 {
-                    // move hero indext to move next hero unit
-                    HeroPartyList.GetNext();
-                    HeroIndex++;
+                    state = BattleState.HeroTurn;
                 }
+
                 break;
 
             case BattleState.EnemyTurn:
                 // run enemy attack code
-                Debug.Log("ENEMY TURN");
+                //Debug.Log("ENEMY TURN");
                 break;
 
             case BattleState.WON:
                 // run enemy attack code
                 Debug.Log("Player has WON");
+                // move camera to first enemy unit
+                ActionPanel.SetActive(false);
+                WONPanel.SetActive(true);
+                if(cameraFollowing)
+                {
+                    cameraFollowing = false;
+                }
                 break;
 
             case BattleState.LOST:
                 // run enemy attack code
                 Debug.Log("Player has LOST");
+                ActionPanel.SetActive(false);
+                LOSTPanel.SetActive(true);
+                if(cameraFollowing)
+                {
+                    cameraFollowing = false;
+                }
                 break;
         }
     }
@@ -177,18 +191,13 @@ public class BattleManager : MonoBehaviour
         // attack can not be negative and must be atleast 1
         if(Attack < 1) Attack = 1;
 
-        Debug.Log("Attack = " + Attack);
-
         DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= Attack;
-
+        
         // if defending unit health is less than 1 then unit is dead
         if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
         {
             DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
             DefendingUnit.SetActive(false);
-
-            // remove unit from party list so that it is not selectable anymore
-            HeroPartyList.Remove();
         }
     }
 
@@ -207,35 +216,19 @@ public class BattleManager : MonoBehaviour
 
     /************************* BUTTON SECTION - END ****************************/
 
-    // depricated, needs fix
     // check if either party is dead
     // moves the state to won or lost
     public bool isPartyDead()
     {
         // check if hero party is dead
-        bool isHeroPartyDead = true;
-        foreach(GameObject unit in HeroPartyList)
-            if(unit.GetComponent<BaseHero>().CurrentHealthPoints > 0)
-            {
-                isHeroPartyDead = false;
-                break;
-            }
-        if(isHeroPartyDead)
+        if(HeroPartyList.size == 0)
         {
             state = BattleState.LOST;
             return true;
         }
             
-
         // check if Enemy party is dead
-        bool isEnemyPartyDead = true;
-        foreach(GameObject unit in EnemyPartyList)
-            if(unit.GetComponent<BaseEnemy>().CurrentHealthPoints > 0)
-            {
-                isEnemyPartyDead = false;
-                break;
-            }
-        if(isEnemyPartyDead)
+        if(EnemyPartyList.size == 0)
         {
             state = BattleState.WON;
             return true;
@@ -249,7 +242,7 @@ public class BattleManager : MonoBehaviour
     {
         // party size for each party
         int HeroPartySize = Random.Range(1,Hero.transform.childCount + 1);
-        int EnemyPartySize = Random.Range(1,Enemy.transform.childCount + 1);
+        int EnemyPartySize = 3; //Random.Range(1,Enemy.transform.childCount + 1);
 
         HeroPartyList = new UnitLinkList();
         EnemyPartyList = new UnitLinkList();
@@ -270,7 +263,7 @@ public class BattleManager : MonoBehaviour
             HeroPartyList.Add(unit);
 
             // initialize unit with random stats for testing
-            UnitStatsInit(unit.transform.parent.gameObject);
+            UnitStatsInit(unit.transform.parent.gameObject, i);
         }
 
         // initializing Enemy untis
@@ -288,7 +281,7 @@ public class BattleManager : MonoBehaviour
             EnemyPartyList.Add(unit);
 
             // initialize enemy stat units for test
-            UnitStatsInit(unit.transform.parent.gameObject);
+            UnitStatsInit(unit.transform.parent.gameObject, i);
         }
 
         // other way to get children
@@ -305,14 +298,14 @@ public class BattleManager : MonoBehaviour
 
     // this method is for testing purposes only
     // initialize units stats with random variables
-    void UnitStatsInit(GameObject unit)
+    void UnitStatsInit(GameObject unit, int i)
     {
         BaseUnit UnitStats = unit.gameObject.GetComponent<BaseUnit>();
 
-        UnitStats.UnitName = unit.gameObject.GetComponent<BaseUnit>().name;
+        UnitStats.UnitName = "Unit " + (i+1); //unit.gameObject.GetComponent<BaseUnit>().name;
         UnitStats.Level = 1;
 
-        UnitStats.BaseHealthPoints = Random.Range(5,15);
+        UnitStats.BaseHealthPoints = Random.Range(5,10);
         UnitStats.BaseMagicPoitns = Random.Range(5,10);
         UnitStats.BaseSkillPoints = Random.Range(5,10);
 
@@ -321,7 +314,7 @@ public class BattleManager : MonoBehaviour
         UnitStats.CurrentSkillPoints = UnitStats.BaseSkillPoints;
 
         UnitStats.Strength = Random.Range(5,15);
-        UnitStats.Endurance = Random.Range(5,15);
+        UnitStats.Endurance = Random.Range(5,10);
         UnitStats.Dexterity = Random.Range(5,15);
         UnitStats.Intelligence = Random.Range(5,15);
         UnitStats.Agility = Random.Range(5,15);
