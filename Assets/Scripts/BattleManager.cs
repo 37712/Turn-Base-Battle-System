@@ -142,7 +142,8 @@ public class BattleManager : MonoBehaviour
             case BattleState.EnemyTurn:
                 // run enemy attack code
 
-                Debug.Log("Enemy turn does nothing");
+                Debug.Log("Enemy attacks");
+                
 
                 // do nothing for now
                 state = BattleState.HeroTurn;

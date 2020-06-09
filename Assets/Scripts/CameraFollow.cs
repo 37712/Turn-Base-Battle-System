@@ -34,15 +34,14 @@ public class CameraFollow : MonoBehaviour
     void LateUpdate()
     {
         // if camera folloing is true
-        if(BattleManager.GetComponent<BattleManager>().cameraFollowing)
+        if(BattleManager.GetComponent<BattleManager>().cameraFollowing &&
+            CameraTarget != null)
         {
-            //Debug.Log("here");
             transform.position = CameraTarget.transform.position + offsetPosition; // moves camera close to target
             transform.LookAt(CameraTarget.transform); // makes camera look at target
         }
         else
         {
-            Debug.Log("NOT FOLLOWING");
             transform.position = DefaultPosition;
             transform.eulerAngles = DefaultRotation;
         }
