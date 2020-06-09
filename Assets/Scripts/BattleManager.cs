@@ -77,12 +77,7 @@ public class BattleManager : MonoBehaviour
                 */
 
                 if(Input.GetKeyDown(KeyCode.Space))
-                {
-                    Debug.Log(  "Attacker " +
-                                HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name +
-                                " Defender " +
-                                EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name  );
-                    
+                {                    
                     Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr());
                     
                     // if unit is dead
@@ -142,11 +137,11 @@ public class BattleManager : MonoBehaviour
             case BattleState.EnemyTurn:
                 // run enemy attack code
 
-                Debug.Log("Enemy attacks");
-                
+                // select a random hero to attack
+                Attack(EnemyPartyList.GetCurr(),HeroPartyList.GetRandomUnit());
 
                 // do nothing for now
-                state = BattleState.HeroTurn;
+                state = BattleState.NextUnit;
 
                 break;
 
@@ -174,6 +169,11 @@ public class BattleManager : MonoBehaviour
     // also checks if target is dead and kills the object
     public void Attack(GameObject AttackingUnit, GameObject DefendingUnit)
     {
+        Debug.Log(  "Attacker " +
+                    AttackingUnit.GetComponentInParent<BaseUnit>().name +
+                    " Defender " +
+                    DefendingUnit.GetComponentInParent<BaseUnit>().name  );
+
         int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
         int Attack = AttackingUnit.GetComponentInParent<BaseUnit>().Strength;
 

@@ -132,4 +132,11 @@ public class UnitLinkList
         curr = head;
     }
 
+    // move curr to random unit and get GameObject
+    public GameObject GetRandomUnit()
+    {
+        for(int i = 0; i < Random.Range(0,size); i++) curr = curr.next;
+        return GetCurr();
+    }
+
 }
