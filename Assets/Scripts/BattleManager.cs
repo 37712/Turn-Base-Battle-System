@@ -25,8 +25,9 @@ public class BattleManager : MonoBehaviour
     //contains array of unit model with parent object having the stats of the unit
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
-    //public int HeroIndex = 0;
-    //public int EnemyIndex = 0;
+    public UnitLinkList UnitBattleList;
+    public int HeroIndex = 0;
+    public int EnemyIndex = 0;
 
     public bool EnemySurpriseAttack;
 
@@ -81,7 +82,7 @@ public class BattleManager : MonoBehaviour
                     Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr());
                     
                     // if unit is dead
-                    if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
+                    if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
                     {
                         EnemyPartyList.Remove();
                     }
@@ -111,12 +112,11 @@ public class BattleManager : MonoBehaviour
                 
                 break;
 
-            // selects the next hero unit that is going to move
+            // selects the next hero or enemy unit that is going to move
             case BattleState.NextUnit:
 
-                //Debug.Log("NEXT UNIT STATE");
-
-                // checks to see if one of the parties is dead and moves state to WON or LOST state
+                // checks to see if one of the parties is dead
+                // this method moves state to WON or LOST state
                 if(isPartyDead())
                 {
                     break;
@@ -134,15 +134,28 @@ public class BattleManager : MonoBehaviour
 
                 break;
 
+            // run enemy attack code
             case BattleState.EnemyTurn:
-                // run enemy attack code
-
+            
                 // select a random hero to attack
                 Attack(EnemyPartyList.GetCurr(),HeroPartyList.GetRandomUnit());
 
-                // do nothing for now
-                state = BattleState.NextUnit;
+                // if unit is dead
+                if(HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
+                {
+                    HeroPartyList.Remove();
+                    
+                    // if all heros are dead
+                    if(HeroPartyList.size == 0)
+                    {
+                        state = BattleState.LOST;
+                        break;
+                    }
+                }
 
+                // go to select next unit turn
+                state = BattleState.NextUnit;
+                
                 break;
 
             case BattleState.WON:
@@ -198,7 +211,6 @@ public class BattleManager : MonoBehaviour
     // this is for button only
     public void AttackButton()
     {
-        Debug.Log("attack button pressed");
         // disable action panel
         ActionPanel.SetActive(false);
 
@@ -233,7 +245,7 @@ public class BattleManager : MonoBehaviour
     void BattleSetup()
     {
         // party size for each party
-        int HeroPartySize = Random.Range(1,Hero.transform.childCount + 1);
+        int HeroPartySize = 3; //Random.Range(1,Hero.transform.childCount + 1);
         int EnemyPartySize = 3; //Random.Range(1,Enemy.transform.childCount + 1);
 
         HeroPartyList = new UnitLinkList();
