@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {HeroTurn, SelectTarget, NextUnit, EnemyTurn, WON, LOST};
+public enum BattleState {HeroTurn, SelectTarget, NextUnit, BattleTurn, EnemyTurn, WON, LOST};
 
 public class BattleManager : MonoBehaviour
 {
@@ -25,9 +25,9 @@ public class BattleManager : MonoBehaviour
     //contains array of unit model with parent object having the stats of the unit
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
-    public UnitLinkList UnitBattleList;
-    public int HeroIndex = 0;
-    public int EnemyIndex = 0;
+    public UnitLinkList UnitBattleList; // order of unit turn
+    //public int HeroIndex = 0;
+    //public int EnemyIndex = 0;
 
     public bool EnemySurpriseAttack;
 
@@ -41,6 +41,13 @@ public class BattleManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+
+        state = BattleState.HeroTurn;
+        ActionPanel.SetActive(true);
+        Debug.Log("Heros move first");
+        
+        // depricated
+        /*
         if(EnemySurpriseAttack)
         {
             state = BattleState.EnemyTurn;
@@ -53,6 +60,7 @@ public class BattleManager : MonoBehaviour
             ActionPanel.SetActive(true);
             Debug.Log("Heros move first");
         }
+        */
     }
 
     // Update is called once per frame
@@ -61,7 +69,7 @@ public class BattleManager : MonoBehaviour
         switch(state)
         {
             case BattleState.HeroTurn:
-                // chose attack, magic spell, or skill
+                // select, attack, magic spell, or skill
                 // for this test we only code for attack
                 // make hero actionpanel visible
                 ActionPanel.SetActive(true);
