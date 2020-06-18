@@ -6,6 +6,9 @@ using UnityEngine.EventSystems;
 
 public class test : MonoBehaviour
 {
+    public GameObject myButton;
+    public GameObject cube;
+
     public GameObject PanelA;
     public GameObject PanelB;
 
@@ -18,6 +21,8 @@ public class test : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        cube.SetActive(false);
+
         PanelA.SetActive(true);
         PanelB.SetActive(false);
 
@@ -31,6 +36,15 @@ public class test : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
+        Debug.Log(EventSystem.current.currentSelectedGameObject);
+        if(EventSystem.current.currentSelectedGameObject == myButton)
+        {
+            cube.SetActive(true);
+        }
+        else
+        {
+            cube.SetActive(false);
+        }
         
         /*if(Input.GetKeyDown(KeyCode.UpArrow))
         {
