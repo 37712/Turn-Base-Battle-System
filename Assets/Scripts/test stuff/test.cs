@@ -1,27 +1,42 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 public class test : MonoBehaviour
 {
+    public GameObject PanelA;
+    public GameObject PanelB;
+
+    public GameObject FirstButton;
+    public GameObject SelectionButton;
+
     int index = 1;
     int counter = 0;
 
     // Start is called before the first frame update
     void Start()
     {
+        PanelA.SetActive(true);
+        PanelB.SetActive(false);
 
+        // clear selected object
+        EventSystem.current.SetSelectedGameObject(null);
+
+        // start of game first button to be selected
+        EventSystem.current.SetSelectedGameObject(FirstButton);
     }
 
     // Update is called once per frame
     void Update()
     {
         
-        if(Input.GetKeyDown(KeyCode.UpArrow))
+        /*if(Input.GetKeyDown(KeyCode.UpArrow))
         {
             counter++;
             print("key up registered, counter = " + counter);
-        }
+        }*/
 
         //Invoke(some method, 3.0f);
         //Invokerepeating(some method, 0f, 3.0f);
@@ -60,10 +75,26 @@ public class test : MonoBehaviour
         //Debug.Log("end");
     }
 
-    public void testbutton()
+    public void testbuttonCoroutine()
     {
         Debug.Log("coroutine started " + index);
         StartCoroutine(foo(index));
         index++;
     }
+
+    public void testbutton()
+    {
+        print("A button pressed");
+
+        PanelA.SetActive(false);
+        PanelB.SetActive(true);
+
+        // clear selected object
+        EventSystem.current.SetSelectedGameObject(null);
+
+        // set button to be selected
+        EventSystem.current.SetSelectedGameObject(SelectionButton);
+    }
+
+    //IsHighlighted()
 }

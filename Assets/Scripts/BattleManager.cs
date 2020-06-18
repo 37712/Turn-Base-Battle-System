@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {HeroTurn, SelectTarget, NextUnit, BattleTurn, EnemyTurn, WON, LOST};
+public enum BattleState {ActionSelect, TargetSelect, NextUnit, BattlePhase, WON, LOST};
 
 public class BattleManager : MonoBehaviour
 {
@@ -42,7 +42,7 @@ public class BattleManager : MonoBehaviour
     void Start()
     {
 
-        state = BattleState.HeroTurn;
+        state = BattleState.ActionSelect;
         ActionPanel.SetActive(true);
         Debug.Log("Heros move first");
         
@@ -68,22 +68,23 @@ public class BattleManager : MonoBehaviour
     {
         switch(state)
         {
-            case BattleState.HeroTurn:
-                // select, attack, magic spell, or skill
+            // this is where the player can shoose to attack, magic spell, skill, item, run away
+            case BattleState.ActionSelect:
+                
                 // for this test we only code for attack
-                // make hero actionpanel visible
+                // make player action panel action visible
                 ActionPanel.SetActive(true);
                 cameraFollowing = false;
                 break;
 
-            case BattleState.SelectTarget:
+            /*case BattleState.TargetSelect:
 
-                /*
-                bool x = Input.GetButtonDown("LeftArrow");
-                bool y = Input.GetKeyDown(KeyCode.LeftArrow);
-                bool w = Input.GetKey(KeyCode.LeftArrow);
-                float z = Input.GetAxis("horizontal");
-                */
+                
+                //bool x = Input.GetButtonDown("LeftArrow");
+                //bool y = Input.GetKeyDown(KeyCode.LeftArrow);
+                //bool w = Input.GetKey(KeyCode.LeftArrow);
+                //float z = Input.GetAxis("horizontal");
+                
 
                 if(Input.GetKeyDown(KeyCode.Space))
                 {                    
@@ -182,7 +183,7 @@ public class BattleManager : MonoBehaviour
                 {
                     cameraFollowing = false;
                 }
-                break;
+                break;*/
         }
     }
 
@@ -213,20 +214,6 @@ public class BattleManager : MonoBehaviour
             DefendingUnit.SetActive(false);
         }
     }
-
-    /************************* BUTTON SECTION - START ****************************/
-
-    // this is for button only
-    public void AttackButton()
-    {
-        // disable action panel
-        ActionPanel.SetActive(false);
-
-        //SelectionPanel.SetActive(true);
-        state = BattleState.SelectTarget;
-    }
-
-    /************************* BUTTON SECTION - END ****************************/
 
     // check if either party is dead
     // moves the state to won or lost
