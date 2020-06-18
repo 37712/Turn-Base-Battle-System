@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
 public enum BattleState {ActionSelect, TargetSelect, NextUnit, BattlePhase, WON, LOST};
@@ -15,6 +16,7 @@ public class BattleManager : MonoBehaviour
 
     // panel control
     public GameObject ActionPanel;
+    //public GameObject TargetSelect;
     public GameObject WONPanel;
     public GameObject LOSTPanel;
     
@@ -25,7 +27,7 @@ public class BattleManager : MonoBehaviour
     //contains array of unit model with parent object having the stats of the unit
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
-    public UnitLinkList UnitBattleList; // order of unit turn
+    public UnitLinkList UnitBattleList; // order of attacking unit turn
     //public int HeroIndex = 0;
     //public int EnemyIndex = 0;
 
@@ -41,12 +43,13 @@ public class BattleManager : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
-
+        // set battle state
         state = BattleState.ActionSelect;
+
+        // set panels
         ActionPanel.SetActive(true);
-        Debug.Log("Heros move first");
         
-        // depricated
+        // depricated, if enemy suprise attack just give +5 to agility to all enemy units
         /*
         if(EnemySurpriseAttack)
         {
@@ -70,14 +73,14 @@ public class BattleManager : MonoBehaviour
         {
             // this is where the player can shoose to attack, magic spell, skill, item, run away
             case BattleState.ActionSelect:
-                
-                // for this test we only code for attack
-                // make player action panel action visible
+
+                // set panels
                 ActionPanel.SetActive(true);
                 cameraFollowing = false;
+
                 break;
 
-            /*case BattleState.TargetSelect:
+            case BattleState.TargetSelect:
 
                 
                 //bool x = Input.GetButtonDown("LeftArrow");
@@ -85,7 +88,7 @@ public class BattleManager : MonoBehaviour
                 //bool w = Input.GetKey(KeyCode.LeftArrow);
                 //float z = Input.GetAxis("horizontal");
                 
-
+                // if space is pressed
                 if(Input.GetKeyDown(KeyCode.Space))
                 {                    
                     Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr());
@@ -122,7 +125,7 @@ public class BattleManager : MonoBehaviour
                 break;
 
             // selects the next hero or enemy unit that is going to move
-            case BattleState.NextUnit:
+            /*case BattleState.NextUnit:
 
                 // checks to see if one of the parties is dead
                 // this method moves state to WON or LOST state
@@ -282,6 +285,10 @@ public class BattleManager : MonoBehaviour
             // initialize enemy stat units for test
             UnitStatsInit(unit.transform.parent.gameObject, i);
         }
+
+        // add units in attack order based on their speed or agility
+        
+
 
         // other way to get children
         /*Transform[] allChildren = Enemy.GetComponentsInChildren<Transform>();
