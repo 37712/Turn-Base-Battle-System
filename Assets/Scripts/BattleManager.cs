@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {ActionSelect, TargetSelect, NextUnit, BattlePhase, WON, LOST};
+public enum BattleState {NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST};
 
 public class BattleManager : MonoBehaviour
 {
@@ -27,11 +27,12 @@ public class BattleManager : MonoBehaviour
     //contains array of unit model with parent object having the stats of the unit
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
-    public UnitLinkList UnitBattleList; // order of attacking unit turn
+    public UnitLinkList UnitTurnList; // order of attacking unit turn
     //public int HeroIndex = 0;
     //public int EnemyIndex = 0;
-
-    public bool EnemySurpriseAttack;
+    public int fireIndex = 1; // gets assigned to coroutine 
+    public int fireCounter = 0; // gets the coroutine to fire
+    public bool EnemySurpriseAttack; // not yet implemented
 
     // runs before start
     void Awake()
@@ -91,7 +92,7 @@ public class BattleManager : MonoBehaviour
                 // if space is pressed
                 if(Input.GetKeyDown(KeyCode.Space))
                 {                    
-                    Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr());
+                    StartCoroutine(Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr(), fireIndex++));
                     
                     // if unit is dead
                     if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
@@ -125,7 +126,7 @@ public class BattleManager : MonoBehaviour
                 break;
 
             // selects the next hero or enemy unit that is going to move
-            /*case BattleState.NextUnit:
+            case BattleState.NextUnit:
 
                 // checks to see if one of the parties is dead
                 // this method moves state to WON or LOST state
@@ -147,7 +148,7 @@ public class BattleManager : MonoBehaviour
                 break;
 
             // run enemy attack code
-            case BattleState.EnemyTurn:
+            /*case BattleState.EnemyTurn:
             
                 // select a random hero to attack
                 Attack(EnemyPartyList.GetCurr(),HeroPartyList.GetRandomUnit());
@@ -192,8 +193,11 @@ public class BattleManager : MonoBehaviour
 
     // this method calculates damage from attacking unit to defending target
     // also checks if target is dead and kills the object
-    public void Attack(GameObject AttackingUnit, GameObject DefendingUnit)
+    public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit, int fire)
     {
+        // makes the corutine wait until it is its turn to execute
+        yield return new WaitUntil(() => (fire == fireCounter) );
+
         Debug.Log(  "Attacker " +
                     AttackingUnit.GetComponentInParent<BaseUnit>().name +
                     " Defender " +
@@ -211,6 +215,7 @@ public class BattleManager : MonoBehaviour
         DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= Attack;
         
         // if defending unit health is less than 1 then unit is dead
+        // kill off the unit
         if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
         {
             DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
@@ -239,7 +244,7 @@ public class BattleManager : MonoBehaviour
         return false;
     }
 
-    // need to run at awake to set up the battle and for other scripts to be able to find what they need
+    // needs to run at awake to set up the battle at start so that other scripts are able to find what they need
     void BattleSetup()
     {
         // party size for each party
@@ -286,7 +291,12 @@ public class BattleManager : MonoBehaviour
             UnitStatsInit(unit.transform.parent.gameObject, i);
         }
 
-        // add units in attack order based on their speed or agility
+        // make a unit order list
+        UnitTurnList = new UnitLinkList();
+        int HeroMaxVal;
+        int EnemyMaxVal;
+
+
         
 
 
