@@ -7,6 +7,9 @@ public class BaseUnit : MonoBehaviour
 {
     public string UnitName;
 
+    // turn order number
+    public int fire;
+
     // experience level
     public int Level;
 

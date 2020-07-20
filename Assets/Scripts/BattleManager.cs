@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST};
+public enum BattleState {ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST}; // states taken out: NextUnit
 
 public class BattleManager : MonoBehaviour
 {
@@ -102,7 +102,7 @@ public class BattleManager : MonoBehaviour
                     
                     // next units turn
                     HeroPartyList.GetNext();
-                    state = BattleState.NextUnit;
+                    //state = BattleState.NextUnit;
                 }
                 else if(Input.GetKeyDown(KeyCode.LeftArrow))
                 {
@@ -123,28 +123,6 @@ public class BattleManager : MonoBehaviour
                 // get camera target
                 MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList.GetCurr();
                 
-                break;
-
-            // selects the next hero or enemy unit that is going to move
-            case BattleState.NextUnit:
-
-                // checks to see if one of the parties is dead
-                // this method moves state to WON or LOST state
-                if(isPartyDead())
-                {
-                    break;
-                }
-
-                // if all hero units have had their turn
-                if(HeroPartyList.isBackToHead())
-                {
-                    state = BattleState.EnemyTurn;
-                }
-                else
-                {
-                    state = BattleState.HeroTurn;
-                }
-
                 break;
 
             // run enemy attack code
@@ -291,25 +269,61 @@ public class BattleManager : MonoBehaviour
             UnitStatsInit(unit.transform.parent.gameObject, i);
         }
 
-        // make a unit order list
-        UnitTurnList = new UnitLinkList();
-        int HeroMaxVal;
-        int EnemyMaxVal;
+        // sort units byt agility to decide turn order
+        GameObject[] arr = new GameObject[HeroPartyList.size + EnemyPartyList.size];
 
-
-        
-
-
-        // other way to get children
-        /*Transform[] allChildren = Enemy.GetComponentsInChildren<Transform>();
-        foreach (Transform child in allChildren)
+        // pupulate arr with GameObject units
+        //Debug.Log("0" + HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
+        arr[0] = HeroPartyList.GetCurr();
+        HeroPartyList.GetNext();
+        int ii = 1;
+        while(!HeroPartyList.isBackToHead())
         {
-            //child.gameObject.SetActive(false);
-            GameObject unit = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            unit.transform.SetParent(child, false);
-            Renderer UnitColor = unit.GetComponent<Renderer>();
-            UnitColor.material.SetColor("_Color", Color.red);
-        }*/
+            //Debug.Log(ii + HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
+            arr[ii++] = HeroPartyList.GetCurr();
+            HeroPartyList.GetNext();
+        }
+
+        //Debug.Log(ii + EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
+        arr[ii++] = EnemyPartyList.GetCurr();
+        EnemyPartyList.GetNext();
+        while(!EnemyPartyList.isBackToHead())
+        {
+            //Debug.Log(ii + EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
+            arr[ii++] = EnemyPartyList.GetCurr();
+            EnemyPartyList.GetNext();
+        }
+
+        // insertion sort, desending order
+        int n = arr.Length;
+        for (ii = 1; ii < n; ++ii)
+        {
+            GameObject key = arr[ii];
+            int j = ii - 1;
+  
+            // Move elements of arr[0..i-1],
+            // that are greater than key,
+            // to one position ahead of
+            // their current position
+            while (j >= 0 && arr[j].GetComponentInParent<BaseUnit>().Agility < key.GetComponentInParent<BaseUnit>().Agility)
+            {
+                arr[j + 1] = arr[j];
+                j = j - 1;
+            }
+            arr[j + 1] = key;
+        }
+
+        // assigne fire order number to each unit
+        for(ii = 0; ii < n; ii++)
+        {
+            arr[ii].GetComponentInParent<BaseUnit>().fire = ii + 1;
+        }
+
+        // print turn order list
+        Debug.Log("Printing turn order list start");
+        for (int i = 0; i < n; ++i) 
+            Debug.Log(arr[i].GetComponentInParent<BaseUnit>().name); 
+        Debug.Log("Printing turn order list end"); 
     }
 
     // this method is for testing purposes only
