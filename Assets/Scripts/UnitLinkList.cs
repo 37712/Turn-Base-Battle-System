@@ -66,10 +66,17 @@ public class UnitLinkList
         return true;
     }
 
-    // NOT TESTED, it is finished and expected to work
+    public void Remove(GameObject data)
+    {
+        while(data != curr.data) curr = curr.next;
+        
+        if(data == curr.data) RemoveCurr();
+        else Debug.Log("failed to remove, data was not found on linked list");
+    }
+
     // remove curr node from list
     // move current to prev and remove node
-    public void Remove()
+    public void RemoveCurr()
     {
         if(size == 1) // if only 1 node
         {

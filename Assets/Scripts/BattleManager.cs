@@ -27,8 +27,7 @@ public class BattleManager : MonoBehaviour
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
 
-    public int fireIndex = 1; // gets assigned to coroutine 
-    public int fireCounter = 0; // gets the coroutine to fire
+    public int fireCounter = 0; // used to set off the attacks in order
     public int partyindex = 1; // used to know if we have iterated though the Hero/Enemy party
     public bool EnemySurpriseAttack; // not yet implemented
 
@@ -116,7 +115,7 @@ public class BattleManager : MonoBehaviour
                     StartCoroutine(Attack(Hero, Enemy));
                     
                     // if unit is dead, remove from enemy party list
-                    if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
+                    /*if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
                     {
                         EnemyPartyList.Remove();
 
@@ -126,7 +125,7 @@ public class BattleManager : MonoBehaviour
                             state = BattleState.WON;
                             break;
                         }
-                    }
+                    }*/
                     
                     // next units turn
                     HeroPartyList.GetNext();
@@ -159,10 +158,11 @@ public class BattleManager : MonoBehaviour
                 Enemy = EnemyPartyList.GetCurr();
 
                 // attach method called
+                //Debug.Log("party index = " + partyindex + " ATK method " + Enemy.GetComponentInParent<BaseUnit>().name);
                 StartCoroutine(Attack(Enemy, HeroPartyList.GetRandom()));
 
                 // if unit is dead remove from hero party list
-                if(HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
+                /*if(HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
                 {
                     HeroPartyList.Remove();
                     
@@ -172,9 +172,9 @@ public class BattleManager : MonoBehaviour
                         state = BattleState.LOST;
                         break;
                     }
-                }
+                }*/
 
-                if(partyindex > EnemyPartyList.size)
+                if(partyindex == EnemyPartyList.size)
                 {
                     state = BattleState.BattlePhase;
                     partyindex = 1; // reset party index to 1
@@ -190,7 +190,13 @@ public class BattleManager : MonoBehaviour
             // This is where the actually battle scenes take place
             case BattleState.BattlePhase:
 
-
+                if(fireCounter <= HeroPartyList.size +EnemyPartyList.size)
+                    fireCounter++;
+                else
+                {
+                    state = BattleState.NextUnit;
+                    fireCounter = 0;
+                }
 
                 break;
 
@@ -219,11 +225,6 @@ public class BattleManager : MonoBehaviour
         // makes the corutine wait until it is its turn to execute
         yield return new WaitUntil(() => (AttackingUnit.GetComponentInParent<BaseUnit>().fire == fireCounter) );
 
-        Debug.Log(  "Attacker " +
-                    AttackingUnit.GetComponentInParent<BaseUnit>().name +
-                    " Defender " +
-                    DefendingUnit.GetComponentInParent<BaseUnit>().name  );
-
         int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
         int Attack = AttackingUnit.GetComponentInParent<BaseUnit>().Strength;
 
@@ -233,6 +234,12 @@ public class BattleManager : MonoBehaviour
         // attack can not be negative and must be atleast 1
         if(Attack < 1) Attack = 1;
 
+        Debug.Log(  "Attacker " +
+                    AttackingUnit.GetComponentInParent<BaseUnit>().name +
+                    " Defender " +
+                    DefendingUnit.GetComponentInParent<BaseUnit>().name +
+                    " fire " + fireCounter + " atk = " + Attack);
+
         DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= Attack;
         
         // if defending unit health is less than 1 then unit is dead
@@ -240,7 +247,11 @@ public class BattleManager : MonoBehaviour
         if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
         {
             DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
-            DefendingUnit.SetActive(false);
+            DefendingUnit.SetActive(false); // but unit is still selectable in unitlinkedlist
+            if(DefendingUnit.GetComponentInParent<BaseHero>() != null) // if hero
+                HeroPartyList.Remove(DefendingUnit);
+            else // if enemy
+                EnemyPartyList.Remove(DefendingUnit);
         }
     }
 
@@ -338,10 +349,10 @@ public class BattleManager : MonoBehaviour
         }
 
         // print turn order list
-        /*Debug.Log("Printing turn order list start");
+        Debug.Log("Printing turn order list start");
         for (int i = 0; i < n; ++i) 
             Debug.Log(arr[i].GetComponentInParent<BaseUnit>().name); 
-        Debug.Log("Printing turn order list end");*/
+        Debug.Log("Printing turn order list end");
     }
 
     // this method is for testing purposes only
