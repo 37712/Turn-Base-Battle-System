@@ -119,8 +119,15 @@ public class UnitLinkList
 
     // OTHER SPECIAL METHODS
 
+    // return true if next node is head node
+    // usefeull to know if you have gone though all nodes in link
+    public bool isHeadNext()
+    {
+        return (curr.next == head) ? true : false;
+    }
+
     // return true if curr is pointing to head
-    // usefeull to know if you have done one full rotation of the link
+    // usefeull to know if you have gone through one full rotation of the link
     public bool isBackToHead()
     {
         return (curr == head) ? true : false;
@@ -133,7 +140,7 @@ public class UnitLinkList
     }
 
     // move curr to random unit and get GameObject
-    public GameObject GetRandomUnit()
+    public GameObject GetRandom()
     {
         for(int i = 0; i < Random.Range(0,size); i++) curr = curr.next;
         return GetCurr();

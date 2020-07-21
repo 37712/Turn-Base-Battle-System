@@ -5,18 +5,17 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST}; // states taken out: NextUnit
+public enum BattleState {NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST}; // states taken out: NextUnit
 
 public class BattleManager : MonoBehaviour
 {
     public BattleState state;
 
-    public GameObject Hero;
-    public GameObject Enemy;
+    public GameObject Hero; // current hero selected
+    public GameObject Enemy; // current enemy selected
 
     // panel control
     public GameObject ActionPanel;
-    //public GameObject TargetSelect;
     public GameObject WONPanel;
     public GameObject LOSTPanel;
     
@@ -24,14 +23,13 @@ public class BattleManager : MonoBehaviour
     public GameObject MainCamera;
     public bool cameraFollowing = false;
 
-    //contains array of unit model with parent object having the stats of the unit
+    //contains liked list of units with parent object having the stats of the unit
     public UnitLinkList HeroPartyList;
     public UnitLinkList EnemyPartyList;
-    public UnitLinkList UnitTurnList; // order of attacking unit turn
-    //public int HeroIndex = 0;
-    //public int EnemyIndex = 0;
+
     public int fireIndex = 1; // gets assigned to coroutine 
     public int fireCounter = 0; // gets the coroutine to fire
+    public int partyindex = 1; // used to know if we have iterated though the Hero/Enemy party
     public bool EnemySurpriseAttack; // not yet implemented
 
     // runs before start
@@ -45,7 +43,7 @@ public class BattleManager : MonoBehaviour
     void Start()
     {
         // set battle state
-        state = BattleState.ActionSelect;
+        state = BattleState.NextUnit;
 
         // set panels
         ActionPanel.SetActive(true);
@@ -71,19 +69,38 @@ public class BattleManager : MonoBehaviour
     void Update()
     {
         switch(state)
-        {
-            // this is where the player can shoose to attack, magic spell, skill, item, run away
+        {   
+            // this is where the game makes decitions
+            case BattleState.NextUnit:
+                
+                // set current unit
+                Hero = HeroPartyList.GetCurr();
+
+                if(partyindex > HeroPartyList.size)
+                {
+                    state = BattleState.EnemyTurn;
+                    partyindex = 1; // reset party index to 1
+                }
+                else
+                {
+                    state = BattleState.ActionSelect;
+                    partyindex++;
+                }
+                
+                break;
+
+            // this is where the player can choose to attack, magic spell, skill, item, run away, etc
             case BattleState.ActionSelect:
 
                 // set panels
-                ActionPanel.SetActive(true);
+                ActionPanel.SetActive(true); // action panel can change the state to target select
                 cameraFollowing = false;
 
                 break;
 
+            // this is where the player selects the enemy unit to attack
             case BattleState.TargetSelect:
 
-                
                 //bool x = Input.GetButtonDown("LeftArrow");
                 //bool y = Input.GetKeyDown(KeyCode.LeftArrow);
                 //bool w = Input.GetKey(KeyCode.LeftArrow);
@@ -91,18 +108,29 @@ public class BattleManager : MonoBehaviour
                 
                 // if space is pressed
                 if(Input.GetKeyDown(KeyCode.Space))
-                {                    
-                    StartCoroutine(Attack(HeroPartyList.GetCurr(), EnemyPartyList.GetCurr(), fireIndex++));
+                {
+                    Hero = HeroPartyList.GetCurr();
+                    Enemy = EnemyPartyList.GetCurr();
+
+                    // attach method called
+                    StartCoroutine(Attack(Hero, Enemy));
                     
-                    // if unit is dead
+                    // if unit is dead, remove from enemy party list
                     if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
                     {
                         EnemyPartyList.Remove();
+
+                        // if all heros are dead
+                        if(EnemyPartyList.size == 0)
+                        {
+                            state = BattleState.WON;
+                            break;
+                        }
                     }
                     
                     // next units turn
                     HeroPartyList.GetNext();
-                    //state = BattleState.NextUnit;
+                    state = BattleState.NextUnit;
                 }
                 else if(Input.GetKeyDown(KeyCode.LeftArrow))
                 {
@@ -126,12 +154,14 @@ public class BattleManager : MonoBehaviour
                 break;
 
             // run enemy attack code
-            /*case BattleState.EnemyTurn:
+            case BattleState.EnemyTurn:
             
-                // select a random hero to attack
-                Attack(EnemyPartyList.GetCurr(),HeroPartyList.GetRandomUnit());
+                Enemy = EnemyPartyList.GetCurr();
 
-                // if unit is dead
+                // attach method called
+                StartCoroutine(Attack(Enemy, HeroPartyList.GetRandom()));
+
+                // if unit is dead remove from hero party list
                 if(HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
                 {
                     HeroPartyList.Remove();
@@ -144,37 +174,50 @@ public class BattleManager : MonoBehaviour
                     }
                 }
 
-                // go to select next unit turn
-                state = BattleState.NextUnit;
+                if(partyindex > EnemyPartyList.size)
+                {
+                    state = BattleState.BattlePhase;
+                    partyindex = 1; // reset party index to 1
+                }
+                else
+                {
+                    EnemyPartyList.GetNext(); // move to next enemy unit
+                    partyindex++;
+                }
                 
                 break;
 
+            // This is where the actually battle scenes take place
+            case BattleState.BattlePhase:
+
+
+
+                break;
+
             case BattleState.WON:
+
                 ActionPanel.SetActive(false);
                 WONPanel.SetActive(true);
-                if(cameraFollowing)
-                {
-                    cameraFollowing = false;
-                }
+                cameraFollowing = false;
+                
                 break;
 
             case BattleState.LOST:
+
                 ActionPanel.SetActive(false);
                 LOSTPanel.SetActive(true);
-                if(cameraFollowing)
-                {
-                    cameraFollowing = false;
-                }
-                break;*/
+                cameraFollowing = false;
+
+                break;
         }
     }
 
     // this method calculates damage from attacking unit to defending target
     // also checks if target is dead and kills the object
-    public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit, int fire)
+    public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit)
     {
         // makes the corutine wait until it is its turn to execute
-        yield return new WaitUntil(() => (fire == fireCounter) );
+        yield return new WaitUntil(() => (AttackingUnit.GetComponentInParent<BaseUnit>().fire == fireCounter) );
 
         Debug.Log(  "Attacker " +
                     AttackingUnit.GetComponentInParent<BaseUnit>().name +
@@ -199,27 +242,6 @@ public class BattleManager : MonoBehaviour
             DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
             DefendingUnit.SetActive(false);
         }
-    }
-
-    // check if either party is dead
-    // moves the state to won or lost
-    public bool isPartyDead()
-    {
-        // check if hero party is dead
-        if(HeroPartyList.size == 0)
-        {
-            state = BattleState.LOST;
-            return true;
-        }
-            
-        // check if Enemy party is dead
-        if(EnemyPartyList.size == 0)
-        {
-            state = BattleState.WON;
-            return true;
-        }
-
-        return false;
     }
 
     // needs to run at awake to set up the battle at start so that other scripts are able to find what they need
@@ -294,17 +316,12 @@ public class BattleManager : MonoBehaviour
             EnemyPartyList.GetNext();
         }
 
-        // insertion sort, desending order
+        // sort arr with insertion sort in desending order
         int n = arr.Length;
         for (ii = 1; ii < n; ++ii)
         {
             GameObject key = arr[ii];
             int j = ii - 1;
-  
-            // Move elements of arr[0..i-1],
-            // that are greater than key,
-            // to one position ahead of
-            // their current position
             while (j >= 0 && arr[j].GetComponentInParent<BaseUnit>().Agility < key.GetComponentInParent<BaseUnit>().Agility)
             {
                 arr[j + 1] = arr[j];
@@ -317,13 +334,14 @@ public class BattleManager : MonoBehaviour
         for(ii = 0; ii < n; ii++)
         {
             arr[ii].GetComponentInParent<BaseUnit>().fire = ii + 1;
+            //Debug.Log(arr[ii].GetComponentInParent<BaseUnit>().name + " fire = " + arr[ii].GetComponentInParent<BaseUnit>().fire);
         }
 
         // print turn order list
-        Debug.Log("Printing turn order list start");
+        /*Debug.Log("Printing turn order list start");
         for (int i = 0; i < n; ++i) 
             Debug.Log(arr[i].GetComponentInParent<BaseUnit>().name); 
-        Debug.Log("Printing turn order list end"); 
+        Debug.Log("Printing turn order list end");*/
     }
 
     // this method is for testing purposes only
