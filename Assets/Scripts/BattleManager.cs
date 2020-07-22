@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST}; // states taken out: NextUnit
+public enum BattleState {TurnStart, NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST}; // states taken out: NextUnit
 
 public class BattleManager : MonoBehaviour
 {
@@ -29,6 +29,7 @@ public class BattleManager : MonoBehaviour
 
     public int fireCounter = 0; // used to set off the attacks in order
     public int partyindex = 1; // used to know if we have iterated though the Hero/Enemy party
+    public int turnCounter = 1; // counte how many turns have passed
     public bool EnemySurpriseAttack; // not yet implemented
 
     // runs before start
@@ -69,6 +70,15 @@ public class BattleManager : MonoBehaviour
     {
         switch(state)
         {   
+            // this is where the game makes decitions
+            case BattleState.TurnStart:
+
+                turnCounter++;
+                Debug.Log("Turn counter = " + turnCounter);
+                state = BattleState.NextUnit;
+                
+                break;
+
             // this is where the game makes decitions
             case BattleState.NextUnit:
                 
@@ -176,14 +186,13 @@ public class BattleManager : MonoBehaviour
 
                 if(partyindex == EnemyPartyList.size)
                 {
-                    state = BattleState.BattlePhase;
                     partyindex = 1; // reset party index to 1
+                    state = BattleState.BattlePhase;
                 }
                 else
-                {
-                    EnemyPartyList.GetNext(); // move to next enemy unit
                     partyindex++;
-                }
+
+                EnemyPartyList.GetNext(); // move to next enemy unit
                 
                 break;
 
@@ -194,7 +203,7 @@ public class BattleManager : MonoBehaviour
                     fireCounter++;
                 else
                 {
-                    state = BattleState.NextUnit;
+                    state = BattleState.TurnStart;
                     fireCounter = 0;
                 }
 
@@ -252,6 +261,8 @@ public class BattleManager : MonoBehaviour
                 HeroPartyList.Remove(DefendingUnit);
             else // if enemy
                 EnemyPartyList.Remove(DefendingUnit);
+
+            Debug.Log(DefendingUnit.GetComponentInParent<BaseUnit>().name + " has died");
         }
     }
 
@@ -349,10 +360,10 @@ public class BattleManager : MonoBehaviour
         }
 
         // print turn order list
-        Debug.Log("Printing turn order list start");
+        Debug.Log("Printing turn order list START ***");
         for (int i = 0; i < n; ++i) 
             Debug.Log(arr[i].GetComponentInParent<BaseUnit>().name); 
-        Debug.Log("Printing turn order list end");
+        Debug.Log("Printing turn order list END ***");
     }
 
     // this method is for testing purposes only

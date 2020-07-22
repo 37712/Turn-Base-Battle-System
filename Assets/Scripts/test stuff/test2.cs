@@ -7,26 +7,26 @@ using UnityEngine.EventSystems;// Required when using Event data.
 //this script goes attached to the buttons
 public class test2 : MonoBehaviour
 {
+    public GameObject myobj;
+    public int myfire = 0;
+
     // Start is called before the first frame update
     void Start()
     {
-        
+        StartCoroutine(foo());
     }
 
     // Update is called once per frame
     void Update()
     {
-
+        
     }
 
-    //Do this when the selectable UI object is selected.
-	public void OnSelect (BaseEventData eventData) 
-	{
-		Debug.Log (this.gameObject.name + " was selected");
-	}
-
-    public void BTPressed()
+    public IEnumerator foo ()
     {
-        print("button has been pressed");
+
+        yield return new WaitUntil(() => (myobj.GetComponentInParent<test>().fire == myfire));
+
+        Debug.Log("foo has finished");
     }
 }
