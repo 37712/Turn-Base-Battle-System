@@ -6,7 +6,7 @@ using UnityEngine;
 // this link list has special methods to work with this specific project
 public class UnitLinkList
 {
-    private Node head; // start of the linklist, we do need it do not erase
+    private Node head; // start of the linklist, do not mess around with the head
     private Node curr; // where we are currently pointing
     public int size;
 
@@ -66,9 +66,10 @@ public class UnitLinkList
         return true;
     }
 
+    // remove node with specified data
     public void Remove(GameObject data)
     {
-        while(data != curr.data) curr = curr.next;
+        for(int i = 1; i < size; i++) curr = curr.next;
         
         if(data == curr.data) RemoveCurr();
         else Debug.Log("failed to remove, data was not found on linked list");
@@ -126,22 +127,29 @@ public class UnitLinkList
 
     // OTHER SPECIAL METHODS
 
+    // return true if curr is pointing to head
+    // usefeull to know if you have gone through one full rotation of the link
+    public bool isHead()
+    {
+        return (curr == head) ? true : false;
+    }
+
+    // return true if curr is NOT pointing to head
+    // usefeull to know if you are still traversing the link
+    public bool isNotHead()
+    {
+        return (curr != head) ? true : false;
+    }
+    
     // return true if next node is head node
-    // usefeull to know if you have gone though all nodes in link
+    // usefeull to know if you have gone though all nodes in link and next link is head
     public bool isHeadNext()
     {
         return (curr.next == head) ? true : false;
     }
 
-    // return true if curr is pointing to head
-    // usefeull to know if you have gone through one full rotation of the link
-    public bool isBackToHead()
-    {
-        return (curr == head) ? true : false;
-    }
-
     // go back to start of circle
-    public void CurrToHead()
+    public void ReturnToHead()
     {
         curr = head;
     }
@@ -149,8 +157,9 @@ public class UnitLinkList
     // move curr to random unit and get GameObject
     public GameObject GetRandom()
     {
-        for(int i = 0; i < Random.Range(0,size); i++) curr = curr.next;
-        return GetCurr();
+        Node tmp = head; // pointer
+        for(int i = 0; i < Random.Range(0,size); i++) tmp = tmp.next;
+        return tmp.data;
     }
 
 }

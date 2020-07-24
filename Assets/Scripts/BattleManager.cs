@@ -5,7 +5,7 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {TurnStart, NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, WON, LOST}; // states taken out: NextUnit
+public enum BattleState {TurnStart, NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, TurnEnd, WON, LOST}; // states taken out: NextUnit
 
 public class BattleManager : MonoBehaviour
 {
@@ -43,7 +43,7 @@ public class BattleManager : MonoBehaviour
     void Start()
     {
         // set battle state
-        state = BattleState.NextUnit;
+        state = BattleState.TurnStart;
 
         // set panels
         ActionPanel.SetActive(true);
@@ -73,8 +73,8 @@ public class BattleManager : MonoBehaviour
             // this is where the game makes decitions
             case BattleState.TurnStart:
 
+                Debug.Log("##############Turn counter = " + turnCounter + "################");
                 turnCounter++;
-                Debug.Log("Turn counter = " + turnCounter);
                 state = BattleState.NextUnit;
                 
                 break;
@@ -124,19 +124,6 @@ public class BattleManager : MonoBehaviour
                     // attach method called
                     StartCoroutine(Attack(Hero, Enemy));
                     
-                    // if unit is dead, remove from enemy party list
-                    /*if(EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
-                    {
-                        EnemyPartyList.Remove();
-
-                        // if all heros are dead
-                        if(EnemyPartyList.size == 0)
-                        {
-                            state = BattleState.WON;
-                            break;
-                        }
-                    }*/
-                    
                     // next units turn
                     HeroPartyList.GetNext();
                     state = BattleState.NextUnit;
@@ -168,21 +155,7 @@ public class BattleManager : MonoBehaviour
                 Enemy = EnemyPartyList.GetCurr();
 
                 // attach method called
-                //Debug.Log("party index = " + partyindex + " ATK method " + Enemy.GetComponentInParent<BaseUnit>().name);
                 StartCoroutine(Attack(Enemy, HeroPartyList.GetRandom()));
-
-                // if unit is dead remove from hero party list
-                /*if(HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().CurrentHealthPoints == 0)
-                {
-                    HeroPartyList.Remove();
-                    
-                    // if all heros are dead
-                    if(HeroPartyList.size == 0)
-                    {
-                        state = BattleState.LOST;
-                        break;
-                    }
-                }*/
 
                 if(partyindex == EnemyPartyList.size)
                 {
@@ -196,21 +169,34 @@ public class BattleManager : MonoBehaviour
                 
                 break;
 
-            // This is where the actually battle scenes take place
+            // This is where the battle take place
             case BattleState.BattlePhase:
 
-                if(fireCounter <= HeroPartyList.size +EnemyPartyList.size)
+                if(fireCounter <= 20)
                     fireCounter++;
                 else
                 {
-                    state = BattleState.TurnStart;
+                    state = BattleState.TurnEnd;
                     fireCounter = 0;
                 }
 
                 break;
 
+            case BattleState.TurnEnd:
+
+                // if heros are dead
+                if(HeroPartyList.size == 0) state = BattleState.LOST;
+                // if enemys are dead
+                else if(EnemyPartyList.size == 0) state = BattleState.WON;
+                // both parties are still standing
+                else
+                    state = BattleState.TurnStart;
+
+                break;
+
             case BattleState.WON:
 
+                Debug.Log("Player has won");
                 ActionPanel.SetActive(false);
                 WONPanel.SetActive(true);
                 cameraFollowing = false;
@@ -219,6 +205,7 @@ public class BattleManager : MonoBehaviour
 
             case BattleState.LOST:
 
+                Debug.Log("Player has lost");
                 ActionPanel.SetActive(false);
                 LOSTPanel.SetActive(true);
                 cameraFollowing = false;
@@ -227,42 +214,122 @@ public class BattleManager : MonoBehaviour
         }
     }
 
+    // maybe we can giev it a pointer to the node itself instead of a game object
     // this method calculates damage from attacking unit to defending target
-    // also checks if target is dead and kills the object
+    // also checks if target is dead and kills the unit
     public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit)
     {
+        // The yield return line is the point at which execution will pause and be resumed the following frame.
         // makes the corutine wait until it is its turn to execute
-        yield return new WaitUntil(() => (AttackingUnit.GetComponentInParent<BaseUnit>().fire == fireCounter) );
+        //yield return new WaitUntil(() => (AttackingUnit.GetComponentInParent<BaseUnit>().fire == fireCounter));
+        while(AttackingUnit.GetComponentInParent<BaseUnit>().fire != fireCounter) yield return null;
 
-        int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
-        int Attack = AttackingUnit.GetComponentInParent<BaseUnit>().Strength;
-
-        // attack calculation
-        Attack = Attack - Defense;
-
-        // attack can not be negative and must be atleast 1
-        if(Attack < 1) Attack = 1;
-
-        Debug.Log(  "Attacker " +
-                    AttackingUnit.GetComponentInParent<BaseUnit>().name +
-                    " Defender " +
-                    DefendingUnit.GetComponentInParent<BaseUnit>().name +
-                    " fire " + fireCounter + " atk = " + Attack);
-
-        DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= Attack;
-        
-        // if defending unit health is less than 1 then unit is dead
-        // kill off the unit
-        if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
+        // if attacking unit and defending unit are still alive, procede with attack
+        if(AttackingUnit.activeSelf && DefendingUnit.activeSelf)
         {
-            DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
-            DefendingUnit.SetActive(false); // but unit is still selectable in unitlinkedlist
-            if(DefendingUnit.GetComponentInParent<BaseHero>() != null) // if hero
-                HeroPartyList.Remove(DefendingUnit);
-            else // if enemy
-                EnemyPartyList.Remove(DefendingUnit);
+            int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
+            int Attack = AttackingUnit.GetComponentInParent<BaseUnit>().Strength;
 
-            Debug.Log(DefendingUnit.GetComponentInParent<BaseUnit>().name + " has died");
+            // damage calculation
+            int damage = Attack - Defense;
+
+            // damage can not be negative and must be atleast 1
+            if(damage < 1) damage = 1;
+
+            DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= damage;
+
+            Debug.Log(  "Attacker " +
+                        AttackingUnit.GetComponentInParent<BaseUnit>().name +
+                        ", Defender " +
+                        DefendingUnit.GetComponentInParent<BaseUnit>().name +
+                        " fire " + fireCounter + " atk = " + damage );
+            
+            // if defending unit health is less than 1, then unit is dead
+            // kill off the unit
+            if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
+            {
+                // remove dead unit from linked list
+                if(DefendingUnit.GetComponentInParent<BaseHero>() != null) // if hero
+                {
+                    Debug.Log("removing hero");
+                    HeroPartyList.Remove(DefendingUnit);
+                }
+                else // if enemy
+                {
+                    Debug.Log("removing enemy");
+                    EnemyPartyList.Remove(DefendingUnit);
+                }
+                    
+
+                DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
+                DefendingUnit.SetActive(false);
+
+                Debug.Log(DefendingUnit.GetComponentInParent<BaseUnit>().name + " has died**");
+            }
+        }
+        // attacking or defending unit are dead
+        else
+        {
+            // if attacking unit is dead, do nothing
+            if(!AttackingUnit.activeSelf)
+            {
+                Debug.Log("attack from " + AttackingUnit.GetComponentInParent<BaseUnit>().name + " nullified, because "
+                         + AttackingUnit.GetComponentInParent<BaseUnit>().name + " is dead**");
+            }
+            // if defending unit is dead, find new target
+            else if(!DefendingUnit.activeSelf)
+            {
+                Debug.Log("attack from " + AttackingUnit.GetComponentInParent<BaseUnit>().name + " nullified, because "
+                         + DefendingUnit.GetComponentInParent<BaseUnit>().name + " is dead**");
+                
+                // if there are still units to attack
+                if(HeroPartyList.size > 0 && EnemyPartyList.size > 0)
+                {
+                    // need to select new unit to target for this attack
+                    Debug.Log("Finding new target");
+
+                    // if defending unit is hero
+                    if(DefendingUnit.GetComponentInParent<BaseHero>() != null)
+                        DefendingUnit = HeroPartyList.GetRandom();
+                    else // if enemy
+                        DefendingUnit = EnemyPartyList.GetRandom();
+
+                    int Defense = DefendingUnit.GetComponentInParent<BaseUnit>().Endurance;
+                    int Attack = AttackingUnit.GetComponentInParent<BaseUnit>().Strength;
+
+                    // damage calculation
+                    int damage = Attack - Defense;
+
+                    // damage can not be negative and must be atleast 1
+                    if(damage < 1) damage = 1;
+
+                    DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints -= damage;
+
+                    Debug.Log(  "Attacker " +
+                                AttackingUnit.GetComponentInParent<BaseUnit>().name +
+                                ", Defender " +
+                                DefendingUnit.GetComponentInParent<BaseUnit>().name +
+                                " fire " + fireCounter + " atk = " + damage );
+                    
+                    // if defending unit health is less than 1, then unit is dead
+                    // kill off the unit
+                    if(DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints < 1)
+                    {
+                        // remove dead unit from linked list
+                        if(DefendingUnit.GetComponentInParent<BaseHero>() != null) // if hero
+                            HeroPartyList.Remove(DefendingUnit);
+                        else // if enemy
+                            EnemyPartyList.Remove(DefendingUnit);
+
+                        DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
+                        DefendingUnit.SetActive(false);
+
+                        Debug.Log(DefendingUnit.GetComponentInParent<BaseUnit>().name + " has died**");
+                    }
+                }
+                else
+                    Debug.Log("There are no more units to attack, party has been defeated");
+            }
         }
     }
 
@@ -321,7 +388,7 @@ public class BattleManager : MonoBehaviour
         arr[0] = HeroPartyList.GetCurr();
         HeroPartyList.GetNext();
         int ii = 1;
-        while(!HeroPartyList.isBackToHead())
+        while(!HeroPartyList.isHead())
         {
             //Debug.Log(ii + HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
             arr[ii++] = HeroPartyList.GetCurr();
@@ -331,7 +398,7 @@ public class BattleManager : MonoBehaviour
         //Debug.Log(ii + EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
         arr[ii++] = EnemyPartyList.GetCurr();
         EnemyPartyList.GetNext();
-        while(!EnemyPartyList.isBackToHead())
+        while(!EnemyPartyList.isHead())
         {
             //Debug.Log(ii + EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
             arr[ii++] = EnemyPartyList.GetCurr();
