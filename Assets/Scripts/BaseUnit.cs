@@ -7,11 +7,11 @@ public class BaseUnit : MonoBehaviour
 {
     public string UnitName;
 
-    // turn order number
-    public int fire;
+    public bool isHero;
+    
+    public int fire; // turn order number
 
-    // experience level
-    public int Level;
+    public int Level; // experience level
 
     // base stats for battle
     public int BaseHealthPoints;    // HP

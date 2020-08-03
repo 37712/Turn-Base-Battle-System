@@ -11,8 +11,8 @@ public class BattleManager : MonoBehaviour
 {
     public BattleState state;
 
-    public GameObject Hero; // current hero selected
-    public GameObject Enemy; // current enemy selected
+    public GameObject currHero; // current hero selected
+    public GameObject currEnemy; // current enemy selected
 
     // panel control
     public GameObject ActionPanel;
@@ -23,13 +23,12 @@ public class BattleManager : MonoBehaviour
     public GameObject MainCamera;
     public bool cameraFollowing = false;
 
-    //contains liked list of units with parent object having the stats of the unit
-    public UnitLinkList HeroPartyList;
-    public UnitLinkList EnemyPartyList;
-
     public int fireCounter = 0; // used to set off the attacks in order
-    public int partyindex = 1; // used to know if we have iterated though the Hero/Enemy party
+    public int HeroPartySize;
+    public int EnemyPartySize;
+    public int PartyIndex = 1;
     public int turnCounter = 1; // counte how many turns have passed
+    public int TargetIndex = 1;
     public bool EnemySurpriseAttack; // not yet implemented
 
     // runs before start
@@ -48,8 +47,8 @@ public class BattleManager : MonoBehaviour
         // set panels
         ActionPanel.SetActive(true);
         
-        // depricated, if enemy suprise attack just give +5 to agility to all enemy units
-        // or just give enemy a free attack turn
+        // depricated, if enemy suprise attack just give enemy a free attack turn
+        // or just give +5 to agility to all enemy units
         /*
         if(EnemySurpriseAttack)
         {
@@ -75,7 +74,7 @@ public class BattleManager : MonoBehaviour
             case BattleState.TurnStart:
 
                 Debug.Log("##############Turn counter = " + turnCounter + "################");
-                turnCounter++;
+                
                 state = BattleState.NextUnit;
                 
                 break;
@@ -83,18 +82,18 @@ public class BattleManager : MonoBehaviour
             // this is where the game makes decitions
             case BattleState.NextUnit:
                 
-                // set current unit
-                Hero = HeroPartyList.GetCurr();
-
-                if(partyindex > HeroPartyList.size)
+                // select first or next unit to move
+                currHero = GameObject.Find("Hero Position " + PartyIndex);
+                
+                // have all 
+                if(PartyIndex <= HeroPartySize)
                 {
-                    state = BattleState.EnemyTurn;
-                    partyindex = 1; // reset party index to 1
+                    state = BattleState.ActionSelect;
                 }
                 else
                 {
-                    state = BattleState.ActionSelect;
-                    partyindex++;
+                    PartyIndex = 1; // reset party index to 1
+                    state = BattleState.EnemyTurn;
                 }
                 
                 break;
@@ -119,39 +118,44 @@ public class BattleManager : MonoBehaviour
                 // if space is pressed
                 if(Input.GetKeyDown(KeyCode.Space))
                 {
-                    Hero = HeroPartyList.GetCurr();
-                    Enemy = EnemyPartyList.GetCurr();
 
                     // attach method called
-                    StartCoroutine(Attack(Hero, Enemy));
+                    //StartCoroutine(Attack(currHero, currEnemy));
+                    Debug.Log("attack done****");
                     
                     // next units turn
-                    HeroPartyList.GetNext();
+                    PartyIndex++;
                     state = BattleState.NextUnit;
                 }
                 else if(Input.GetKeyDown(KeyCode.LeftArrow))
                 {
                     Debug.Log("left");
                     // get next unit
-                    EnemyPartyList.GetNext();
+                    while(GameObject.Find("Enemy Position " + ++TargetIndex).GetComponent<BaseUnit>().CurrentHealthPoints == 0)
+                    {
+                        if(TargetIndex >= EnemyPartySize) TargetIndex = 1;
+                    }
                 }
                 else if(Input.GetKeyDown(KeyCode.RightArrow))
                 {
                     Debug.Log("right");
                     // get previous unit
-                    EnemyPartyList.GetPrev();
+                    while(GameObject.Find("Enemy Position " + --TargetIndex).GetComponent<BaseUnit>().CurrentHealthPoints == 0)
+                    {
+                        if(TargetIndex > 0) TargetIndex = EnemyPartySize;
+                    }
                 }
 
                 // move camera to enemy unit
                 cameraFollowing = true;
 
                 // get camera target
-                MainCamera.GetComponent<CameraFollow>().CameraTarget = EnemyPartyList.GetCurr();
+                MainCamera.GetComponent<CameraFollow>().CameraTarget = currEnemy;
                 
                 break;
 
             // run enemy attack code
-            case BattleState.EnemyTurn:
+            /*case BattleState.EnemyTurn:
             
                 Enemy = EnemyPartyList.GetCurr();
 
@@ -191,9 +195,12 @@ public class BattleManager : MonoBehaviour
                 else if(EnemyPartyList.size == 0) state = BattleState.WON;
                 // both parties are still standing
                 else
+                {
                     state = BattleState.TurnStart;
+                    turnCounter++;
+                }
 
-                break;
+                break;*/
 
             case BattleState.WON:
 
@@ -218,7 +225,7 @@ public class BattleManager : MonoBehaviour
     // maybe we can giev it a pointer to the node itself instead of a game object
     // this method calculates damage from attacking unit to defending target
     // also checks if target is dead and kills the unit
-    public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit)
+    /*public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit)
     {
         // The yield return line is the point at which execution will pause and be resumed the following frame.
         // makes the corutine wait until it is its turn to execute
@@ -267,10 +274,10 @@ public class BattleManager : MonoBehaviour
                 Debug.Log(DefendingUnit.GetComponentInParent<BaseUnit>().name + " has died**");
             }
         }
-        // attacking or defending unit are dead
+        // attacking or defending unit is dead
         else
         {
-            // if attacking unit is dead, do nothing
+            // if attacking unit is dead, do nothing because attacked is dead
             if(!AttackingUnit.activeSelf)
             {
                 Debug.Log("attack from " + AttackingUnit.GetComponentInParent<BaseUnit>().name + " nullified, because "
@@ -327,39 +334,35 @@ public class BattleManager : MonoBehaviour
                         Debug.Log(DefendingUnit.GetComponentInParent<BaseUnit>().name + " has died**");
                     }
                 }
-                else
+                else // there are no more units to attack
                     Debug.Log("There are no more units to attack, party has been defeated");
             }
         }
-    }
+    }*/
 
     // needs to run at awake to set up the battle at start so that other scripts are able to find what they need
     void BattleSetup()
     {
         // party size for each party
-        int HeroPartySize = 3; //Random.Range(1,Hero.transform.childCount + 1);
-        int EnemyPartySize = 3; //Random.Range(1,Enemy.transform.childCount + 1);
-
-        HeroPartyList = new UnitLinkList();
-        EnemyPartyList = new UnitLinkList();
+        HeroPartySize = 3; //Random.Range(1,Hero.transform.childCount + 1);
+        EnemyPartySize = 3; //Random.Range(1,Enemy.transform.childCount + 1);
 
         // initializing Hero units
-        // unit.transform.childCount wil give you the number of child
+        // unit.transform.childCount will give you the number of child
         for(int i = 0; i < HeroPartySize; i++)
         {
             // spawn character
             GameObject unit = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            unit.transform.SetParent(Hero.transform.GetChild(i), false);
+            unit.transform.SetParent(GameObject.Find("Hero").transform.GetChild(i), false);
             Renderer UnitColor = unit.GetComponent<Renderer>();
             UnitColor.material.SetColor("_Color", Color.cyan);
 
             // add unit script to object and add to list
             //BaseHero HeroScript = unit.gameObject.AddComponent<BaseHero>();// add to child
             BaseHero HeroScript = unit.transform.parent.gameObject.AddComponent<BaseHero>();// add to parent
-            HeroPartyList.Add(unit);
 
             // initialize unit with random stats for testing
-            UnitStatsInit(unit.transform.parent.gameObject, i);
+            UnitStatsInit(unit.transform.parent.gameObject, "Hero" + (i+ 1));
         }
 
         // initializing Enemy untis
@@ -367,51 +370,37 @@ public class BattleManager : MonoBehaviour
         {
             // spawn enemy
             GameObject unit = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            unit.transform.SetParent(Enemy.transform.GetChild(i), false);
+            unit.transform.SetParent(GameObject.Find("Enemy").transform.GetChild(i), false);
             Renderer UnitColor = unit.GetComponent<Renderer>();
             UnitColor.material.SetColor("_Color", Color.red);
 
             // add unit script to object and add to list
             //BaseEnemy EnemyScript = unit.gameObject.AddComponent<BaseEnemy>();// add to child
             BaseEnemy EnemyScript = unit.transform.parent.gameObject.AddComponent<BaseEnemy>();// add to parent
-            EnemyPartyList.Add(unit);
 
-            // initialize enemy stat units for test
-            UnitStatsInit(unit.transform.parent.gameObject, i);
+            // initialize unit with random stats for testing
+            UnitStatsInit(unit.transform.parent.gameObject, "Enemy" + (i+ 1));
         }
 
-        // sort units byt agility to decide turn order
-        GameObject[] arr = new GameObject[HeroPartyList.size + EnemyPartyList.size];
+        // sort units by agility to decide turn order
+        GameObject[] arr = new GameObject[HeroPartySize + EnemyPartySize];
 
         // pupulate arr with GameObject units
-        //Debug.Log("0" + HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
-        arr[0] = HeroPartyList.GetCurr();
-        HeroPartyList.GetNext();
-        int ii = 1;
-        while(!HeroPartyList.isHead())
-        {
-            //Debug.Log(ii + HeroPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
-            arr[ii++] = HeroPartyList.GetCurr();
-            HeroPartyList.GetNext();
-        }
-
-        //Debug.Log(ii + EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
-        arr[ii++] = EnemyPartyList.GetCurr();
-        EnemyPartyList.GetNext();
-        while(!EnemyPartyList.isHead())
-        {
-            //Debug.Log(ii + EnemyPartyList.GetCurr().GetComponentInParent<BaseUnit>().name);
-            arr[ii++] = EnemyPartyList.GetCurr();
-            EnemyPartyList.GetNext();
-        }
+        arr[0] = GameObject.Find("Hero Position 1");
+        arr[1] = GameObject.Find("Hero Position 2");
+        arr[2] = GameObject.Find("Hero Position 3");
+        arr[3] = GameObject.Find("Enemy Position 1");
+        arr[4] = GameObject.Find("Enemy Position 2");
+        arr[5] = GameObject.Find("Enemy Position 3");
 
         // sort arr with insertion sort in desending order
+        // unit with highest agility goes first
         int n = arr.Length;
-        for (ii = 1; ii < n; ++ii)
+        for (int i = 1; i < n; ++i)
         {
-            GameObject key = arr[ii];
-            int j = ii - 1;
-            while (j >= 0 && arr[j].GetComponentInParent<BaseUnit>().Agility < key.GetComponentInParent<BaseUnit>().Agility)
+            GameObject key = arr[i];
+            int j = i - 1;
+            while (j >= 0 && arr[j].GetComponent<BaseUnit>().Agility < key.GetComponent<BaseUnit>().Agility)
             {
                 arr[j + 1] = arr[j];
                 j = j - 1;
@@ -419,11 +408,11 @@ public class BattleManager : MonoBehaviour
             arr[j + 1] = key;
         }
 
-        // assigne fire order number to each unit
-        for(ii = 0; ii < n; ii++)
+        // assigne fire order number based on agility to each unit
+        for(int i = 0; i < n; i++)
         {
-            arr[ii].GetComponentInParent<BaseUnit>().fire = ii + 1;
-            //Debug.Log(arr[ii].GetComponentInParent<BaseUnit>().name + " fire = " + arr[ii].GetComponentInParent<BaseUnit>().fire);
+            arr[i].GetComponentInParent<BaseUnit>().fire = i + 1;
+            //Debug.Log(arr[i].GetComponentInParent<BaseUnit>().name + " fire = " + arr[i].GetComponentInParent<BaseUnit>().fire);
         }
 
         // print turn order list
@@ -435,11 +424,11 @@ public class BattleManager : MonoBehaviour
 
     // this method is for testing purposes only
     // initialize units stats with random variables
-    void UnitStatsInit(GameObject unit, int i)
+    void UnitStatsInit(GameObject unit, string str)
     {
         BaseUnit UnitStats = unit.gameObject.GetComponent<BaseUnit>();
 
-        UnitStats.UnitName = "Unit " + (i+1); //unit.gameObject.GetComponent<BaseUnit>().name;
+        UnitStats.UnitName = str;
         UnitStats.Level = 1;
 
         UnitStats.BaseHealthPoints = Random.Range(5,10);

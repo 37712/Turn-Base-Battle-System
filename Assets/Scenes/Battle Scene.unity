@@ -38,7 +38,7 @@ RenderSettings:
   m_ReflectionIntensity: 1
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 1327158787}
-  m_IndirectSpecularColor: {r: 0.4482581, g: 0.49828452, b: 0.5755912, a: 1}
+  m_IndirectSpecularColor: {r: 0.4482482, g: 0.49827528, b: 0.5755824, a: 1}
   m_UseRadianceAmbientProbe: 0
 --- !u!157 &3
 LightmapSettings:
@@ -753,13 +753,19 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   state: 0
-  Hero: {fileID: 714617779}
-  Enemy: {fileID: 105646088}
+  currHero: {fileID: 1910644813}
+  currEnemy: {fileID: 597961420}
   ActionPanel: {fileID: 118874585}
   WONPanel: {fileID: 1114619730}
   LOSTPanel: {fileID: 804463910}
   MainCamera: {fileID: 1801737557}
   cameraFollowing: 0
+  fireCounter: 0
+  HeroPartySize: 0
+  EnemyPartySize: 0
+  PartyIndex: 1
+  turnCounter: 1
+  TargetIndex: 1
   EnemySurpriseAttack: 0
 --- !u!4 &516003213
 Transform:
