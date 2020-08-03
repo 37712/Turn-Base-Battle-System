@@ -49,6 +49,7 @@ public class BattleManager : MonoBehaviour
         ActionPanel.SetActive(true);
         
         // depricated, if enemy suprise attack just give +5 to agility to all enemy units
+        // or just give enemy a free attack turn
         /*
         if(EnemySurpriseAttack)
         {
@@ -259,7 +260,6 @@ public class BattleManager : MonoBehaviour
                     Debug.Log("removing enemy");
                     EnemyPartyList.Remove(DefendingUnit);
                 }
-                    
 
                 DefendingUnit.GetComponentInParent<BaseUnit>().CurrentHealthPoints = 0;
                 DefendingUnit.SetActive(false);

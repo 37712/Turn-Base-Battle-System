@@ -66,12 +66,47 @@ public class UnitLinkList
         return true;
     }
 
+    // not working, if curr node is the one that gets removed.
     // remove node with specified data
     public void Remove(GameObject data)
     {
-        for(int i = 1; i < size; i++) curr = curr.next;
-        
-        if(data == curr.data) RemoveCurr();
+        Debug.Log("attempting to remove " + data.GetComponentInParent<BaseUnit>().name);
+        Node tmp = curr;
+
+        for(int i = 1; i < size; i++)
+        {
+            Debug.Log("tmp link: " + tmp.data.GetComponentInParent<BaseUnit>().name);
+            if(data == tmp.data){Debug.Log("found"); break;}
+            else tmp = tmp.next;
+        }
+        if(data == tmp.data)
+        {
+            Debug.Log("removing");
+
+            if(size == 1) // if only 1 node
+            {
+                tmp = head = null;
+                size--; // dont forget to decrease size
+            }
+            else if(size > 1) // if more than 1 node
+            {
+                // move pointers to delete middle node
+                Node ptr = tmp.prev;
+                tmp = tmp.next;
+                
+                // make new next and prev
+                ptr.next = tmp;
+                tmp.prev = ptr;
+
+                // if head node was removed from link
+                if(head.prev == ptr && head.next == tmp)
+                {
+                    head = tmp;
+                }
+                
+                size--; // dont forget to decrease size
+            }
+        }
         else Debug.Log("failed to remove, data was not found on linked list");
     }
 
