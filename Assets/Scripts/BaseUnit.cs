@@ -7,7 +7,7 @@ public class BaseUnit : MonoBehaviour
 {
     public string UnitName;
 
-    public bool isHero;
+    //public bool isHero;
     
     public int fire; // turn order number
 
