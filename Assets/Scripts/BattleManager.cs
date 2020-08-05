@@ -5,12 +5,14 @@ using UnityEngine.UI;
 using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 
-public enum BattleState {TurnStart, NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, TurnEnd, WON, LOST}; // states taken out: NextUnit
+public enum BattleState {TurnStart, NextUnit, ActionSelect, TargetSelect, EnemyTurn, BattlePhase, TurnEnd, WON, LOST, BattleEnd}; // states taken out: NextUnit
 
 public class BattleManager : MonoBehaviour
 {
     public BattleState state;
 
+    public GameObject Hero; // parent of hero tree
+    public GameObject Enemy; // parent of enemy tree
     public GameObject currHero; // current hero selected
     public GameObject currEnemy; // current enemy selected
 
@@ -85,11 +87,15 @@ public class BattleManager : MonoBehaviour
                 // select first or next unit to move
                 currHero = GameObject.Find("Hero Position " + PartyIndex);
                 
-                // have all party memvers had their turn
+                // if all party members have had their turn
                 if(PartyIndex > HeroPartySize)
                 {
                     PartyIndex = 1; // reset party index to 1
                     state = BattleState.EnemyTurn;
+                }
+                else if (isDead(currHero)) // if unit is dead
+                {
+                    PartyIndex++;
                 }
                 else
                 {
@@ -147,6 +153,7 @@ public class BattleManager : MonoBehaviour
                 // get camera target
                 if(isDead(currEnemy))
                 {
+                    Debug.Log("getting new target for camera");
                     GetNext();
                     currEnemy = GameObject.Find("Enemy Position " + TargetIndex);
                 }
@@ -159,9 +166,9 @@ public class BattleManager : MonoBehaviour
             
                 currEnemy = GameObject.Find("Enemy Position " + PartyIndex);
                 currHero = GameObject.Find("Hero Position " + Random.Range(1, HeroPartySize+1));
-
-                // attack method called
-                StartCoroutine(Attack(currEnemy, currHero));
+                
+                // if unit is not dead then it can attack
+                if(!isDead(currEnemy)) StartCoroutine(Attack(currEnemy, currHero));
 
                 // have all party members had their turn
                 if(PartyIndex == EnemyPartySize)
@@ -177,8 +184,8 @@ public class BattleManager : MonoBehaviour
 
             // This is where the battle takes place
             case BattleState.BattlePhase:
-
-                if(fireCounter <= 20)
+                
+                if(fireCounter <= 20) // need to fix this in the future
                     fireCounter++;
                 else
                 {
@@ -191,9 +198,9 @@ public class BattleManager : MonoBehaviour
             case BattleState.TurnEnd:
 
                 // if heros are dead
-                if(HeroPartySize == 0) state = BattleState.LOST;
+                if(isPartyDead(Hero)) state = BattleState.LOST;
                 // if enemys are dead
-                else if(EnemyPartySize == 0) state = BattleState.WON;
+                else if(isPartyDead(Enemy)) state = BattleState.WON;
                 // both parties are still standing
                 else
                 {
@@ -220,10 +227,17 @@ public class BattleManager : MonoBehaviour
                 cameraFollowing = false;
 
                 break;
+
+            case BattleState.BattleEnd:
+
+                // there is nothing to put here
+
+                break;
         }
     }
 
     // moves target index to next enemy unit that is still alive
+    // can only be used to point at enemy target
     public void GetNext()
     {
         Debug.Log("get next");
@@ -235,6 +249,7 @@ public class BattleManager : MonoBehaviour
     }
 
     // moves target index to prev enemy unit that is still alive
+    // can only be used to point at enemy target
     public void GetPrev()
     {
         Debug.Log("get prev");
@@ -242,16 +257,27 @@ public class BattleManager : MonoBehaviour
         else TargetIndex--;
         
         if(GameObject.Find("Enemy Position " + TargetIndex).GetComponent<BaseUnit>().CurrentHealthPoints == 0)
-            GetNext();
+            GetPrev();
     }
 
+    // checks to see if unit is dead
     public bool isDead(GameObject Unit)
     {
         return (Unit.GetComponent<BaseUnit>().CurrentHealthPoints == 0) ? true : false;
     }
 
-    // maybe we can giev it a pointer to the node itself instead of a game object
-    // this method calculates damage from attacking unit to defending target
+    // checks to see if party is dead, you must give it either Hero or Enemy parent object in tree
+    public bool isPartyDead(GameObject UnitParent)
+    {
+        for(int i = 0; i < UnitParent.transform.childCount; i++)
+        {
+            if(UnitParent.transform.GetChild(i).GetComponent<BaseUnit>() != null &&
+               UnitParent.transform.GetChild(i).GetComponent<BaseUnit>().CurrentHealthPoints != 0) return false;
+        }
+        return true;
+    }
+
+    // this method calculates damage from attacking unit to defending unit
     // also checks if target is dead and kills the unit
     public IEnumerator Attack(GameObject AttackingUnit, GameObject DefendingUnit)
     {
@@ -306,7 +332,7 @@ public class BattleManager : MonoBehaviour
                          + DefendingUnit.GetComponent<BaseUnit>().name + " is deadBBB**");
                 
                 // if there are still units to attack
-                if(HeroPartySize > 0 && EnemyPartySize > 0) // NEED TO FIX THIS LINE
+                if(!isPartyDead(Hero) && !isPartyDead(Enemy))
                 {
                     // need to select new unit to target for this attack
                     Debug.Log("Finding new target");
@@ -360,7 +386,7 @@ public class BattleManager : MonoBehaviour
         }
     }
 
-    // needs to run at awake to set up the battle at start so that other scripts are able to find what they need
+    // needs to run at awake to set up the battle before start so that other scripts are able to find what they need
     void BattleSetup()
     {
         // party size for each party
@@ -373,7 +399,7 @@ public class BattleManager : MonoBehaviour
         {
             // spawn character
             GameObject unit = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            unit.transform.SetParent(GameObject.Find("Hero").transform.GetChild(i), false);
+            unit.transform.SetParent(Hero.transform.GetChild(i), false); // set parent
             Renderer UnitColor = unit.GetComponent<Renderer>();
             UnitColor.material.SetColor("_Color", Color.cyan);
 
@@ -390,7 +416,7 @@ public class BattleManager : MonoBehaviour
         {
             // spawn enemy
             GameObject unit = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            unit.transform.SetParent(GameObject.Find("Enemy").transform.GetChild(i), false);
+            unit.transform.SetParent(Enemy.transform.GetChild(i), false); // set parent
             Renderer UnitColor = unit.GetComponent<Renderer>();
             UnitColor.material.SetColor("_Color", Color.red);
 
